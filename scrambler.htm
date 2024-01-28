@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Scrambler</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #results {
+      margin-top: 20px;
+    }
+
+    #about {
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+<script type="text/javascript" src="./crypto-sha256.js"></script>
+<h1>Password Scrambler</h1>
+
+<div>
+  <label for="siteName">Site Name:</label>
+  <select id="siteName"></select>
+  <input type="text" id="newSite" placeholder="Add Site">
+  <button onclick="addSite()">Add Site</button>
+  <button onclick="removeSite()">Remove Site</button>
+</div>
+
+<div>
+  <label for="easyPassword">Your Password:</label>
+  <input type="password" id="easyPassword">
+</div>
+
+<div>
+  <label for="hashCount">Number of Times to Hash:</label>
+  <input type="number" id="hashCount" value="1000">
+</div>
+
+<div>
+  <label for="saltPosition">Salt Position:</label>
+  <input type="number" id="saltPosition" value="50">
+</div>
+
+<div>
+  <label for="passwordLength">Password Length:</label>
+  <input type="number" id="passwordLength" value="20">
+</div>
+
+<button onclick="generateHash()">Generate</button>
+
+<div id="results"></div>
+
+<div id="about">
+  <h2>About This Site</h2>
+  <p>This site turns easy passwords into incredibly difficult to guess passwords. This is not a password manager. All a user needs to remember is the name of the site, the password, the number of times they want to hash(or default) and the salt position. This way a person can think of a password such as "my easy password" and just remember two numers "5000" and "500" for example. The salt position is where the website name is added to the generation. This also makes it so that each website generates a unique password! It's sad to say but the top companies in the world(google, facebook, etc) have been known to not hash or protect your password and keep it in plain text. This is unacceptable for todays security standards. Setting aside that they would have sensitive personal data, it would also mean your other websites logins would be compromised since most people use the same/similar passwords. A website can easily have the user hash the password before submitting it to the website preventing the website from truly knowing their password. In the age of security, open source code and AI, this should have been the standard. This little program will create a tremendous amount of entropy on top of your password. It also means it's less likely to forget or lose a password which can give some advantages over a password manager that losing it can lose the passwords. Remember, all good passwords need "scrambled eggs, hash browns and salt". Note that if a site doesn't allow special characters you can simply remove the "!" at the end of the password when you copy it. Lastly this page comes with the very much needed "anti-keylogger". Nowadays, operating systems even send key press prediction data using services as Cortana and others. Plus spyware can steal peoples key strokes. This simple code makes a virtual keyboard that cannot be predicted so typing is safe. To use it copy the keylogger code by clicking the button, go to the website you want to enter the sensitive data into, click f12, go to "console", paste the code and hit enter. Then follow the instructions. This tool is completely open source and the source code is only a couple hundred lines. You can save this page and run it locally just make sure you also saved the crypto-sha256.js package.</p>
+</div>
+
+<br>
+
+<button id="copyButton">Copy Anti-Keylogger Code</button>
+
+<script>
+  document.getElementById('copyButton').addEventListener('click', function () {
+        navigator.clipboard.writeText(antiKeyloggerCode)
+            .then(() => alert('Anti-keylogger code copied to clipboard!'))
+            .catch(err => console.error('Unable to copy to clipboard', err));
+  });
+  // Array to store added site names
+  const siteNames = [];
+
+  // Function to add a site to the dropdown
+  function addSite() {
+    const newSite = document.getElementById('newSite').value;
+    if (newSite && !siteNames.includes(newSite)) {
+      siteNames.push(newSite);
+      updateDropdown();
+      saveToLocal();
+    }
+  }
+
+  function removeSite() {
+      const selectedSite = document.getElementById('siteName').value;
+      const index = siteNames.indexOf(selectedSite);
+      if (index !== -1) {
+          siteNames.splice(index, 1);
+          updateDropdown();
+          saveToLocal();
+      }
+  }
+
+  // Function to update the site name dropdown
+  function updateDropdown() {
+    const siteDropdown = document.getElementById('siteName');
+    siteDropdown.innerHTML = '';
+
+    siteNames.forEach(site => {
+      const option = document.createElement('option');
+      option.value = site;
+      option.text = site;
+      siteDropdown.appendChild(option);
+    });
+  }
+
+  // Function to generate hash
+  function generateHash() {
+    const easyPassword = document.getElementById('easyPassword').value;
+    const hashCount = parseInt(document.getElementById('hashCount').value, 10);
+    const saltPosition = parseInt(document.getElementById('saltPosition').value, 10);
+    const siteName = document.getElementById('siteName').value.toLowerCase();
+
+    if (!easyPassword || isNaN(hashCount) || isNaN(saltPosition) || !siteName) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    let hashedPassword = Crypto.SHA256(easyPassword);
+
+    for (let i = 1; i <= hashCount; i++) {
+      if (i === saltPosition) {
+        hashedPassword = Crypto.SHA256(hashedPassword + siteName);
+      } else {
+        hashedPassword = Crypto.SHA256(hashedPassword);
+      }
+    }
+
+    const resultsDiv = document.getElementById('results');
+    const passLength = document.getElementById('passwordLength').value;
+    resultsDiv.innerHTML = '<strong>Generated Hash:</strong> ' + hashedPassword.substring(0, passLength) + "A!";
+    saveToLocal(); // Save data after adding a site
+  }
+
+  // Function to save data to localStorage
+  function saveToLocal() {
+    localStorage.setItem('siteNames', JSON.stringify(siteNames));
+    localStorage.setItem('hashCount', document.getElementById('hashCount').value);
+    localStorage.setItem('saltPosition', document.getElementById('saltPosition').value);
+    localStorage.setItem('passwordLength', document.getElementById('passwordLength').value);
+  }
+
+  // Function to get data from localStorage
+  function getFromLocal() {
+    const storedSiteNames = localStorage.getItem('siteNames');
+    const storedHashCount = localStorage.getItem('hashCount');
+    const storedSaltPosition = localStorage.getItem('saltPosition');
+    const passLength = localStorage.getItem('passwordLength');
+
+    if (storedSiteNames) {
+      siteNames.push(...JSON.parse(storedSiteNames));
+      updateDropdown();
+    }
+
+    if (storedHashCount) {
+      document.getElementById('hashCount').value = storedHashCount;
+    }
+
+    if (storedSaltPosition) {
+      document.getElementById('saltPosition').value = storedSaltPosition;
+    }
+
+    if (passLength) {
+      document.getElementById('passwordLength').value = passLength;
+    }
+  }
+
+  // Call getFromLocal on page load to retrieve stored data
+  getFromLocal();
+
+  antiKeyloggerCode = `    let targetInputElement;
+    let alertShown = false;
+    alert('Please click on the password input field.');    
+    document.addEventListener('click', function (event) {
+        const clickedElement = event.target;
+        if (!alertShown) {
+            targetInputElement = clickedElement;
+            alertShown = true;
+            showVirtualKeyboard();
+        }
+    });
+
+
+    function showVirtualKeyboard() {
+        const keyboardPopup = document.createElement('div');
+        keyboardPopup.id = 'keyboard-popup';
+        keyboardPopup.style.position = 'fixed';
+        keyboardPopup.style.top = '50%';
+        keyboardPopup.style.left = '50%';
+        keyboardPopup.style.transform = 'translate(-50%, -50%)';
+        keyboardPopup.style.border = '1px solid #ccc';
+        keyboardPopup.style.padding = '10px';
+        keyboardPopup.style.backgroundColor = '#fff';
+        keyboardPopup.style.zIndex = '9999';
+
+        const characters = generateRandomCharacters();
+        characters.forEach(char => {
+            const button = document.createElement('button');
+            button.textContent = char;
+            button.style.margin = '2px';
+            button.addEventListener('click', function () {
+                targetInputElement.value = targetInputElement.value + char;
+            });
+            keyboardPopup.appendChild(button);
+        });
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Submit';
+        submitButton.addEventListener('click', function () {
+            document.body.removeChild(keyboardPopup);
+        });
+        keyboardPopup.appendChild(submitButton);
+        document.body.appendChild(keyboardPopup);
+    }
+
+    function generateRandomCharacters() {
+        const allCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+        const shuffledCharacters = allCharacters.split('').sort(() => Math.random() - 0.5);
+        return shuffledCharacters;
+    }`
+</script>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Keyboard</title>
+</head>
+<body>
+
+<script>
+    let targetInputElement;
+    let alertShown = false;
+    alert('Please click on the password input field.');    
+    document.addEventListener('click', function (event) {
+        const clickedElement = event.target;
+        if (!alertShown) {
+            targetInputElement = clickedElement;
+            alertShown = true;
+            showVirtualKeyboard();
+        }
+    });
+
+
+    function showVirtualKeyboard() {
+        const keyboardPopup = document.createElement('div');
+        keyboardPopup.id = 'keyboard-popup';
+        keyboardPopup.style.position = 'fixed';
+        keyboardPopup.style.top = '50%';
+        keyboardPopup.style.left = '50%';
+        keyboardPopup.style.transform = 'translate(-50%, -50%)';
+        keyboardPopup.style.border = '1px solid #ccc';
+        keyboardPopup.style.padding = '10px';
+        keyboardPopup.style.backgroundColor = '#fff';
+        keyboardPopup.style.zIndex = '9999';
+
+        const characters = generateRandomCharacters();
+        characters.forEach(char => {
+            const button = document.createElement('button');
+            button.textContent = char;
+            button.style.margin = '2px';
+            button.addEventListener('click', function () {
+                targetInputElement.value = targetInputElement.value + char;
+            });
+            keyboardPopup.appendChild(button);
+        });
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Submit';
+        submitButton.addEventListener('click', function () {
+            document.body.removeChild(keyboardPopup);
+        });
+        keyboardPopup.appendChild(submitButton);
+        document.body.appendChild(keyboardPopup);
+    }
+
+    function generateRandomCharacters() {
+        const allCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+        const shuffledCharacters = allCharacters.split('').sort(() => Math.random() - 0.5);
+        return shuffledCharacters;
+    }
+</script>
+
+<input type="password" id="password-box" />
+
+<div id="keyboard-popup"></div>
+
+</body>
+</html>
